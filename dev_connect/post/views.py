@@ -1,4 +1,7 @@
-from rest_framework import permissions, viewsets
+from rest_framework import permissions, viewsets, generics
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from .models import Comment, Notification, Post
 from .serializers import CommentSerializer, NotificationSerializer, PostSerializer
 
@@ -28,3 +31,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
+
+
+class ListMainFeed(generics.ListAPIView):
+    queryset = Post.objects.all().order_by('-created_at')[:20]
+    serializer_class = PostSerializer
+
+    @method_decorator(cache_page(60 * 5))
+    def list(self, *args, **kwargs):
+        return super().list(*args, **kwargs)
