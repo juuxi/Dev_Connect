@@ -11,5 +11,6 @@ router.register(r'notifications', views.NotificationViewSet, basename='notificat
 
 urlpatterns = [
     path('posts/main_feed/', views.ListMainFeed.as_view()),
+    path('posts/<int:post_id>/clap/', views.ClapCreateView.as_view()),
     path('', include(router.urls)),
 ]

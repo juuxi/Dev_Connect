@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Comment, Notification, Post
+from .models import Comment, Notification, Post, Clap
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -29,3 +29,10 @@ class NotificationSerializer(serializers.ModelSerializer):
         model = Notification
         fields = ['id', 'message', 'user', 'created_at']
         read_only_fields = ['created_at']
+
+
+class ClapSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clap
+        fields = ['id', 'post', 'user']
+        read_only_fields = ['post', 'user']
