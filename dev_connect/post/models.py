@@ -11,7 +11,6 @@ class Post(models.Model):
         related_name='posts',
         verbose_name='Автор',
     )
-    claps = models.PositiveIntegerField(default=0)
     comment_count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -51,3 +50,24 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'Notification for {self.user}: {self.message[:20]}'
+
+
+class Clap(models.Model):
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='claps'
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='claps'
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['post', 'user'],
+                name='unique_post_user'
+            )
+        ]
