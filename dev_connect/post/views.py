@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 
 from .models import Comment, Notification, Post, Clap
 from .serializers import (
@@ -14,9 +15,15 @@ from .serializers import (
 
 
 class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all().select_related('author')
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        return (
+            Post.objects.select_related('author')
+            .annotate(clap_count=Count('claps'))
+            .all()
+        )
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -41,8 +48,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
 
 class ListMainFeed(generics.ListAPIView):
-    queryset = Post.objects.all().order_by('-created_at')[:20]
     serializer_class = PostSerializer
+
+    def get_queryset(self):
+        return (
+            Post.objects.select_related('author')
+            .annotate(clap_count=Count('claps'))
+            .order_by('-created_at')[:20]
+        )
 
     @method_decorator(cache_page(60 * 5))
     def list(self, *args, **kwargs):

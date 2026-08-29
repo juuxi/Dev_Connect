@@ -3,6 +3,8 @@ from .models import Comment, Notification, Post, Clap
 
 
 class PostSerializer(serializers.ModelSerializer):
+    clap_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Post
         fields = [
@@ -10,7 +12,7 @@ class PostSerializer(serializers.ModelSerializer):
             'title',
             'content',
             'author',
-            'claps',
+            'clap_count',
             'comment_count',
             'created_at',
         ]
