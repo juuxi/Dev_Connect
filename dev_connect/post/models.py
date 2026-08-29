@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import F
 
 
 class Post(models.Model):
@@ -33,6 +34,16 @@ class Comment(models.Model):
         verbose_name='Автор',
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        post = self.post
+        Post.objects.filter(id=post.id).update(comment_count=F('comment_count') + 1)
+        Notification.objects.create(
+            message=f'user {self.author.username} left '
+            f'a new comment on your post {post.title}',
+            user=post.author
+        )
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'Comment on {self.post.title}: {self.content[:20]}'

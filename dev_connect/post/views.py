@@ -2,7 +2,6 @@ from rest_framework import permissions, viewsets, generics
 from rest_framework.exceptions import ValidationError
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.db.models import F
 from django.shortcuts import get_object_or_404
 
 from .models import Comment, Notification, Post, Clap
@@ -30,16 +29,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def save(self, *args, **kwargs):
-        post = self.post
-        Post.objects.filter(id=post.id).update(comment_count=F('comment_count') + 1)
-        Notification.objects.create(
-            message=f'user {self.author.username} left '
-            f'a new comment on your post {post.title}',
-            user=post.author
-        )
-        super().save(*args, **kwargs)
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
