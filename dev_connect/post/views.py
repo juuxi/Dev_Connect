@@ -1,8 +1,6 @@
 from rest_framework import permissions, viewsets, generics
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.db.models import F
 
 from .models import Comment, Notification, Post
@@ -26,6 +24,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def save(self, *args, **kwargs):
+        post = self.post
+        Post.objects.filter(id=post.id).update(comment_count=F('comment_count') + 1)
+        Notification.objects.create(
+            message=f'user {self.author.username} left '
+            f'a new comment on your post {post.title}',
+            user=post.author
+        )
+        super().save(*args, **kwargs)
+
 
 class NotificationViewSet(viewsets.ModelViewSet):
     queryset = Notification.objects.all().select_related('user')
@@ -43,15 +51,3 @@ class ListMainFeed(generics.ListAPIView):
     @method_decorator(cache_page(60 * 5))
     def list(self, *args, **kwargs):
         return super().list(*args, **kwargs)
-
-
-@receiver(post_save, sender=Comment)
-def my_handler(sender, instance, created, **kwargs):
-    if created:
-        post = instance.post
-        Post.objects.filter(id=post.id).update(comment_count=F('comment_count') + 1)
-        Notification.objects.create(
-            message=f'user {instance.author.username} left '
-            f'a new comment on your post {post.title}',
-            user=post.author
-        )
